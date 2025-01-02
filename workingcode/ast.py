@@ -71,3 +71,33 @@ class NestedFunction(ASTNode):
 
     def __repr__(self):
         return f"NestedFunction(name={self.name}, parameters={self.parameters}, body={self.body})"
+
+class Print(ASTNode):
+    """Represents a print statement."""
+    def __init__(self, value, is_variable=False):
+        self.value = value
+        self.is_variable = is_variable
+
+    def __repr__(self):
+        if self.is_variable:
+            return f"Print(variable={self.value})"
+        return f"Print(value={self.value})"
+
+class VariableDeclaration(ASTNode):
+    """Represents a variable declaration."""
+    def __init__(self, var_type, name, value):
+        self.var_type = var_type  # integerNamed, textValueNamed, etc.
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return f"VariableDeclaration(type={self.var_type}, name={self.name}, value={self.value})"
+
+class IfCondition(ASTNode):
+    """Represents an if condition."""
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        return f"IfCondition(condition={self.condition}, body={self.body})"

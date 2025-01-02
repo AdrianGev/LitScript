@@ -1,4 +1,4 @@
-from ast import Function, Call, Return
+from ast import Function, Call, Return, Print, VariableDeclaration, IfCondition
 
 class Parser:
     def __init__(self, tokens):
@@ -17,8 +17,14 @@ class Parser:
 
     def parse(self):
         nodes = []
-        while self.current_token():
+        while self.pos < len(self.tokens):
             token = self.current_token()
+            if not token:
+                break
+                
+            if token[0] == 'BRACE' and token[1] == '}':
+                break
+                
             if token[0] == 'KEYWORD':
                 if token[1] == 'functionNamed':
                     nodes.append(self.parse_function())
@@ -26,6 +32,12 @@ class Parser:
                     nodes.append(self.parse_call())
                 elif token[1] == 'return':
                     nodes.append(self.parse_return())
+                elif token[1] == 'print':
+                    nodes.append(self.parse_print())
+                elif token[1] in ['integerNamed', 'textValueNamed']:
+                    nodes.append(self.parse_variable_declaration())
+                elif token[1] == 'ifCondition':
+                    nodes.append(self.parse_if_condition())
                 else:
                     raise ValueError(f"Unexpected keyword: {token[1]}")
             else:
@@ -34,41 +46,77 @@ class Parser:
 
     def parse_function(self):
         self.eat('KEYWORD')  # functionNamed
+        self.eat('BRACKET')  # <
         name = self.eat('NAME')[1]
+        self.eat('BRACKET')  # >
         self.eat('KEYWORD')  # withParameters
-        parameters = self.parse_parameters()
+        self.eat('BRACKET')  # <
+        parameters = self.eat('NAME')[1]
+        self.eat('BRACKET')  # >
         self.eat('BRACE')  # {
-        body = []
-        while self.current_token() and self.current_token()[0] != 'BRACE':
-            body.append(self.parse())
+        body = self.parse()  # Parse until we hit the closing brace
         self.eat('BRACE')  # }
-        return Function(name=name, parameters=parameters, body=body)
-
-    def parse_parameters(self):
-        params = {}
-        while self.current_token() and self.current_token()[0] not in {'BRACE', 'KEYWORD'}:
-            key = self.eat("NAME")[1]
-            self.eat("OPERATOR")  # =
-            params[key] = self.eat("STRING")[1]
-        return params
+        return Function(name=name, parameters=[parameters], body=body)
 
     def parse_call(self):
-        self.eat("KEYWORD")  # callFunction
-        name = self.eat("NAME")[1]
-        self.eat("KEYWORD")  # withArguments
-        arguments = self.parse_arguments()
+        self.eat('KEYWORD')  # callFunction
+        self.eat('BRACKET')  # <
+        name = self.eat('NAME')[1]
+        self.eat('BRACKET')  # >
+        self.eat('KEYWORD')  # withArguments
+        self.eat('BRACKET')  # <
+        arguments = [self.eat('STRING')[1].strip('"')]
+        self.eat('BRACKET')  # >
+        self.eat('TERMINATOR')  # #
         return Call(name=name, arguments=arguments)
 
-    def parse_arguments(self):
-        args = []
-        while self.current_token() and self.current_token()[0] in {"STRING", "COMMA"}:
-            if self.current_token()[0] == 'COMMA':
-                self.eat('COMMA')  # Skip commas
-            else:
-                args.append(self.eat("STRING")[1])
-        return args
-
     def parse_return(self):
-        self.eat("KEYWORD")  # return
-        value = self.eat("STRING")[1]
+        self.eat('KEYWORD')  # return
+        self.eat('BRACKET')  # <
+        value = self.eat('STRING')[1]
+        self.eat('BRACKET')  # >
         return Return(value=value)
+
+    def parse_print(self):
+        self.eat('KEYWORD')  # print
+        self.eat('BRACKET')  # <
+        token = self.current_token()
+        if token[0] == 'STRING':
+            value = self.eat('STRING')[1].strip('"')
+            is_variable = False
+        else:
+            value = self.eat('NAME')[1]
+            is_variable = True
+        self.eat('BRACKET')  # >
+        self.eat('KEYWORD')  # toterminal
+        self.eat('TERMINATOR')  # #
+        return Print(value=value, is_variable=is_variable)
+
+    def parse_variable_declaration(self):
+        var_type = self.eat('KEYWORD')[1]  # integerNamed or textValueNamed
+        self.eat('BRACKET')  # <
+        name = self.eat('NAME')[1]
+        self.eat('BRACKET')  # >
+        self.eat('KEYWORD')  # hasTheValueOf
+        self.eat('BRACKET')  # <
+        if var_type == 'integerNamed':
+            value = self.eat('NUMBER')[1]
+        else:
+            value = self.eat('STRING')[1].strip('"')
+        self.eat('BRACKET')  # >
+        self.eat('TERMINATOR')  # #
+        return VariableDeclaration(var_type=var_type, name=name, value=value)
+
+    def parse_if_condition(self):
+        self.eat('KEYWORD')  # ifCondition
+        self.eat('BRACKET')  # <
+        condition = ''
+        while self.current_token()[1] != '>':
+            condition += self.eat()[1] + ' '
+        condition = condition.strip()
+        self.eat('BRACKET')  # >
+        self.eat('KEYWORD')  # isTrue
+        self.eat('BRACE')  # {
+        body = self.parse()  # Parse until we hit the closing brace
+        self.eat('BRACE')  # }
+        return IfCondition(condition=condition, body=body)
