@@ -1,6 +1,6 @@
 '''
 
-GuavaScript Syntax Guide
+Gooava Syntax Guide
 Comments
 Single-line comment: Use % at the beginning of a line.
 Example:

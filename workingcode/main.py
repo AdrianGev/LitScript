@@ -3,7 +3,7 @@ from parser import Parser
 from interpreter import Interpreter
 
 def main():
-    # Example code using GuavaScript syntax
+    # Example code using Gooava syntax
     code = '''
     % Declare some variables
     integerNamed <counter> hasTheValueOf <5>#
