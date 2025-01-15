@@ -1,3 +1,5 @@
+import re
+
 class Interpreter:
     def __init__(self):
         self.functions = {}
@@ -56,6 +58,10 @@ class Interpreter:
 
     def visit_Print(self, node):
         # Handle print statement
+        if node.expression is not None:
+            # Handle arithmetic expression
+            result = self.evaluate_arithmetic(node.expression)
+            return f"Output: {result}"
         if node.is_variable:
             if node.value not in self.variables:
                 raise Exception(f"Variable '{node.value}' is not defined")
@@ -94,6 +100,36 @@ class Interpreter:
                 return left_val == right_val
         return False
 
+    def evaluate_arithmetic(self, expression):
+        """Evaluates arithmetic expressions like '1+2', '5*3', 'x+5', etc."""
+        try:
+            # Replace variable names with their values
+            for var_name, var_value in self.variables.items():
+                # Only replace full variable names, not parts of other names
+                expression = re.sub(r'\b' + var_name + r'\b', str(var_value), expression)
+            
+            # Basic security check to ensure only allowed operations
+            allowed_chars = set('0123456789+-*/%^() .')
+            if not all(c in allowed_chars for c in expression):
+                raise Exception("Invalid characters in arithmetic expression")
+            
+            # Handle power operator (^) by replacing with Python's **
+            expression = expression.replace('^', '**')
+            
+            # Evaluate the expression
+            result = eval(expression)  # In a production environment, use a safer evaluation method
+            
+            # Format the result based on its type
+            if isinstance(result, (int, float)):
+                if result.is_integer():
+                    return int(result)
+                return round(result, 6)  # Limit decimal places for floats
+            
+            raise Exception("Invalid result type")
+            
+        except Exception as e:
+            raise Exception(f"Invalid arithmetic expression: {expression}. Error: {str(e)}")
+
     def interpret(self, ast):
         return self.visit(ast)
 
@@ -129,9 +165,10 @@ class Return(ASTNode):
         self.value = value
 
 class Print(ASTNode):
-    def __init__(self, value, is_variable=False):
+    def __init__(self, value, is_variable=False, expression=None):
         self.value = value
         self.is_variable = is_variable
+        self.expression = expression
 
 class VariableDeclaration(ASTNode):
     def __init__(self, var_type, name, value):

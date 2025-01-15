@@ -3,12 +3,13 @@ import re
 # Define token types and their patterns
 TOKEN_TYPES = {
     'KEYWORD': r'\b(print|toterminal|functionNamed|withParameters|callFunction|return|withArguments|integerNamed|textValueNamed|hasTheValueOf|ifCondition|isTrue)\b',
-    'NUMBER': r'\d+(\.\d+)?',
+    'NUMBER': r'-?\d*\.?\d+',  # Support for negative and decimal numbers
     'STRING': r'"[^"]*"',
     'NAME': r'[a-zA-Z_][a-zA-Z0-9_]*',
-    'OPERATOR': r'[=]',
-    'COMPARISON': r'[<>]=?',  # For actual comparison operators in conditions
-    'BRACKET': r'[<>]',  # For syntax delimiters
+    'OPERATOR': r'[+\-*/%^]',  # Added modulo and power operators
+    'COMPARISON': r'[<>]=?',
+    'BRACKET': r'[<>]',
+    'PARENTHESIS': r'[()]',  # Support for parentheses
     'BRACE': r'[{}]',
     'COMMA': r',',
     'TERMINATOR': r'#',

@@ -74,11 +74,14 @@ class NestedFunction(ASTNode):
 
 class Print(ASTNode):
     """Represents a print statement."""
-    def __init__(self, value, is_variable=False):
+    def __init__(self, value, is_variable=False, expression=None):
         self.value = value
         self.is_variable = is_variable
+        self.expression = expression  # For arithmetic expressions like <1+2>
 
     def __repr__(self):
+        if self.expression is not None:
+            return f"Print(expression={self.expression})"
         if self.is_variable:
             return f"Print(variable={self.value})"
         return f"Print(value={self.value})"

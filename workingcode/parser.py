@@ -81,6 +81,38 @@ class Parser:
         self.eat('KEYWORD')  # print
         self.eat('BRACKET')  # <
         token = self.current_token()
+        
+        # Check if this is an arithmetic expression
+        if token[0] in ['NUMBER', 'OPERATOR', 'NAME', 'PARENTHESIS']:
+            expression = ''
+            # Keep track of parentheses balance
+            paren_count = 0
+            
+            while True:
+                token = self.current_token()
+                if token[0] == 'PARENTHESIS':
+                    if token[1] == '(':
+                        paren_count += 1
+                    else:
+                        paren_count -= 1
+                        if paren_count < 0:
+                            raise ValueError("Unmatched parentheses in expression")
+                
+                if token[0] in ['NUMBER', 'OPERATOR', 'NAME', 'PARENTHESIS']:
+                    expression += token[1]
+                    self.eat()
+                else:
+                    break
+                    
+            if paren_count != 0:
+                raise ValueError("Unmatched parentheses in expression")
+                
+            self.eat('BRACKET')  # >
+            self.eat('KEYWORD')  # toterminal
+            self.eat('TERMINATOR')  # #
+            return Print(value=None, is_variable=False, expression=expression)
+            
+        # Regular print statement
         if token[0] == 'STRING':
             value = self.eat('STRING')[1].strip('"')
             is_variable = False
