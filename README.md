@@ -1,1 +1,1 @@
-Guavascript is a completely original name with no oblivious origins that can be discovered through one search in your browser.
+Finding the name for this language was unironically the hardest part.
